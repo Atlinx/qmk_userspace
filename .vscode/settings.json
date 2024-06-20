@@ -1,3 +1,7 @@
 {
     "C_Cpp.intelliSenseEngine": "disabled",
+    "[c]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    }
 }
