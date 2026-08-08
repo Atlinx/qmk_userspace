@@ -1,6 +1,6 @@
 {
     "[c]": {
-        "editor.formatOnSave": true,
+        // "editor.formatOnSave": true,
         "editor.defaultFormatter": "ms-vscode.cpptools",
     },
     "C_Cpp.default.compileCommands": [
