@@ -1,6 +1,7 @@
 {
     "userspace_version": "1.0",
     "build_targets": [
-        ["inland/mk47", "atlinx"]
+        ["inland/mk47", "atlinx"],
+        ["zsa/planck_ez/glow", "atlinx"]
     ]
 }
