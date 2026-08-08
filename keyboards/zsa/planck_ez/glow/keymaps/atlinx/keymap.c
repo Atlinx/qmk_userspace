@@ -67,8 +67,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_LOWER] = LAYOUT_planck_grid(
     KC_TILD,        KC_EXLM,        KC_AT,          KC_HASH,        KC_DLR,         KC_PERC,        KC_CIRC,        KC_AMPR,        KC_ASTR,        KC_LPRN,        KC_RPRN,        KC_TRANSPARENT, 
-    KC_DELETE,      KC_MS_WH_DOWN,  KC_NO,          KC_MS_WH_UP,    KC_NO,          KC_NO,          KC_NO,          KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_PIPE,        
-    MO(21),         KC_MS_BTN1,     KC_MS_BTN3,     KC_MS_BTN2,     KC_LEFT_SHIFT,  KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_HOME,        KC_END,         KC_TRANSPARENT, 
+    KC_DELETE,      MS_WHLD,        KC_NO,          MS_WHLU,        KC_NO,          KC_NO,          KC_NO,          KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_PIPE,        
+    MO(21),         MS_BTN1,        MS_BTN3,        MS_BTN2,        KC_LEFT_SHIFT,  KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_HOME,        KC_END,         KC_TRANSPARENT, 
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
 
@@ -81,8 +81,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_ADJUST] = LAYOUT_planck_grid(
     KC_NO,          TO(8),          TO(9),          TD(DANCE_0),    TO(11),         TO(4),          TO(5),          TO(15),         KC_CALCULATOR,  KC_NO,          KC_NO,          KC_NO,          
-    KC_NO,          KC_NO,          QK_AUDIO_ON,    QK_AUDIO_OFF,   AU_TOGG,        KC_BRIGHTNESS_DOWN,KC_BRIGHTNESS_UP,RGB_TOG,        RGB_VAI,        RGB_VAD,        KC_NO,          QK_BOOT,        
-    KC_NO,          KC_NO,          QK_MUSIC_ON,    QK_MUSIC_OFF,   MU_TOGG,        MU_NEXT,        LED_LEVEL,      RGB_MODE_FORWARD,RGB_HUI,        RGB_HUD,        KC_NO,          KC_NO,          
+    KC_NO,          KC_NO,          QK_AUDIO_ON,    QK_AUDIO_OFF,   AU_TOGG,        KC_BRIGHTNESS_DOWN,KC_BRIGHTNESS_UP,RM_TOGG,        RM_VALU,        RM_VALD,        KC_NO,          QK_BOOT,        
+    KC_NO,          KC_NO,          QK_MUSIC_ON,    QK_MUSIC_OFF,   MU_TOGG,        MU_NEXT,        LED_LEVEL,      RM_NEXT,        RM_HUEU,        RM_HUED,        KC_NO,          KC_NO,          
     KC_MEDIA_PREV_TRACK,KC_MEDIA_NEXT_TRACK,KC_MEDIA_STOP,  KC_MEDIA_PLAY_PAUSE,KC_TRANSPARENT, KC_TRANSPARENT, KC_NO,          KC_TRANSPARENT, KC_AUDIO_MUTE,  KC_AUDIO_VOL_DOWN,KC_AUDIO_VOL_UP,KC_MEDIA_PLAY_PAUSE
   ),
 
@@ -122,9 +122,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   [_LAYER9] = LAYOUT_planck_grid(
-    KC_NO,          KC_NO,          KC_MS_BTN4,     KC_MS_WH_UP,    KC_MS_BTN5,     KC_NO,          KC_NO,          KC_NO,          KC_MS_UP,       KC_NO,          KC_NO,          KC_NO,          
-    TO(0),          KC_NO,          KC_MS_WH_LEFT,  KC_MS_WH_DOWN,  KC_MS_WH_RIGHT, KC_NO,          KC_NO,          KC_MS_LEFT,     KC_MS_DOWN,     KC_MS_RIGHT,    KC_NO,          KC_NO,          
-    KC_NO,          KC_NO,          KC_MS_BTN1,     KC_MS_BTN3,     KC_MS_BTN2,     KC_NO,          KC_NO,          KC_MS_ACCEL0,   KC_MS_ACCEL1,   KC_MS_ACCEL2,   KC_NO,          KC_NO,          
+    KC_NO,          KC_NO,          MS_BTN4,        MS_WHLU,        MS_BTN5,        KC_NO,          KC_NO,          KC_NO,          MS_UP,          KC_NO,          KC_NO,          KC_NO,          
+    TO(0),          KC_NO,          MS_WHLL,        MS_WHLD,        MS_WHLR,        KC_NO,          KC_NO,          MS_LEFT,        MS_DOWN,        MS_RGHT,        KC_NO,          KC_NO,          
+    KC_NO,          KC_NO,          MS_BTN1,        MS_BTN3,        MS_BTN2,        KC_NO,          KC_NO,          MS_ACL0,        MS_ACL1,        MS_ACL2,        KC_NO,          KC_NO,          
     KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO
   ),
 
@@ -186,8 +186,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_LAYER18] = LAYOUT_planck_grid(
     KC_TILD,        KC_EXLM,        KC_AT,          KC_HASH,        KC_DLR,         KC_PERC,        KC_CIRC,        KC_AMPR,        KC_ASTR,        KC_LPRN,        KC_RPRN,        KC_TRANSPARENT, 
-    KC_DELETE,      KC_MS_WH_UP,    KC_TRANSPARENT, KC_MS_WH_DOWN,  KC_F24,         KC_TRANSPARENT, KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_PIPE,        
-    MO(21),         KC_MS_BTN1,     KC_MS_BTN3,     KC_MS_BTN2,     KC_LEFT_SHIFT,  KC_TRANSPARENT, KC_TRANSPARENT, TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, 
+    KC_DELETE,      MS_WHLU,        KC_TRANSPARENT, MS_WHLD,        KC_F24,         KC_TRANSPARENT, KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_PIPE,        
+    MO(21),         MS_BTN1,        MS_BTN3,        MS_BTN2,        KC_LEFT_SHIFT,  KC_TRANSPARENT, KC_TRANSPARENT, TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, 
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_NO,          MO(20),         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
 
@@ -285,9 +285,6 @@ void set_layer_color(int layer) {
 }
 
 bool rgb_matrix_indicators_user(void) {
-  if (rawhid_state.rgb_control) {
-      return false;
-  }
   if (keyboard_config.disable_layer_led) { return false; }
   switch (biton32(layer_state)) {
     case 1:
@@ -449,14 +446,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     break;
 
-    case RGB_SLD:
-        if (rawhid_state.rgb_control) {
-            return false;
-        }
-        if (record->event.pressed) {
-            rgblight_mode(1);
-        }
-        return false;
   }
   return true;
 }
@@ -486,16 +475,16 @@ void encoder_update(bool clockwise) {
     } else {
         if (clockwise) {
         #ifdef MOUSEKEY_ENABLE
-            register_code(KC_MS_WH_DOWN);
-            unregister_code(KC_MS_WH_DOWN);
+            register_code(MS_WHLD);
+            unregister_code(MS_WHLD);
         #else
             register_code(KC_PGDN);
             unregister_code(KC_PGDN);
         #endif
         } else {
         #ifdef MOUSEKEY_ENABLE
-            register_code(KC_MS_WH_UP);
-            unregister_code(KC_MS_WH_UP);
+            register_code(MS_WHLU);
+            unregister_code(MS_WHLU);
         #else
             register_code(KC_PGUP);
             unregister_code(KC_PGUP);
