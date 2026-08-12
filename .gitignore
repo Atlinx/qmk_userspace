@@ -9,5 +9,6 @@
 *.hex
 *.bin
 *.uf2
+*.log
 
 compile_commands.json

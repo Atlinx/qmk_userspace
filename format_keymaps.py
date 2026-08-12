@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """format_keymaps.py
 
-Reformats QMK `keymap.c` files in this repository to a consistent style:
+Reformats QMK `.c` files in this repository to a consistent style.  Any `.c`
+file containing a `keymaps` array or an `ledmap` array is processed; files
+with neither are skipped.
 
   * **Globally aligned columns** -- column widths are computed across *every*
     layer in a keymap, so column N sits at the same character offset in every
@@ -333,7 +335,7 @@ def discover(paths: list[str]) -> list[Path]:
         for p in paths:
             p = Path(p)
             if p.is_dir():
-                files.extend(p.rglob("keymap.c"))
+                files.extend(p.rglob("*.c"))
             elif p.is_file():
                 files.append(p)
         return sorted(set(files))
@@ -341,7 +343,7 @@ def discover(paths: list[str]) -> list[Path]:
     for d in SEARCH_DIRS:
         base = ROOT / d
         if base.is_dir():
-            files.extend(base.rglob("keymap.c"))
+            files.extend(base.rglob("*.c"))
     return sorted(set(files))
 
 
@@ -359,7 +361,7 @@ def main(argv: list[str] | None = None) -> int:
     for f in files:
         new_text, orig = format_file(f)
         if new_text is None:
-            print(f"[skip] {f}  (no keymaps array found)")
+            print(f"[skip] {f}  (no keymaps or ledmap array found)")
         elif new_text == orig:
             print(f"[ ok ] {f}")
         else:
