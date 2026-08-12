@@ -18,7 +18,7 @@
 #define C_PURPLE {105, 7, 252}  /*RGB*/
 #define C_MAGENTA {255, 0, 222} /*RGB*/
 
-#define C_ORANGE_LIGHT {255, 183, 110}  /*RGB*/
+#define C_RED_ORANGE {255, 50, 0} /*RGB*/
 #define C_PURPLE_LIGHT {163, 101, 255}  /*RGB*/
 
 #define C_WHITE_DARK {64, 64, 64}  /*RGB*/

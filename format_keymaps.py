@@ -73,7 +73,7 @@ def find_region(text: str) -> tuple[int, int] | None:
     on = text.find("// clang-format on")
     if off != -1 and on != -1 and off < on:
         return off, on + len("// clang-format on")
-    m = re.search(r"const\s+uint16_t\s+PROGMEM\s+keymaps", text)
+    m = re.search(r"const\s+uint16_t\s+PROGMEM\s+[^\s]*keymaps", text)
     if not m:
         return None
     start = m.start()
@@ -216,7 +216,7 @@ def format_region(region: str) -> str | None:
     return "".join(out)
 
 
-LEDMAP_RE = re.compile(r"const\s+uint8_t\s+PROGMEM\s+ledmap")
+LEDMAP_RE = re.compile(r"const\s+uint8_t\s+PROGMEM\s+[^\s]*ledmap")
 LEDMAP_LAYER_RE = re.compile(r"\[(\w+)\]\s*=\s*\{")
 
 
