@@ -403,6 +403,9 @@ extern uint8_t music_mode;
 
 bool rgb_matrix_indicators_user(void) {
     int layer_int = biton32(layer_state);
+    if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
     if (layer_int == L_BASE) {
         if (user_config.base_overlay > BOV_NONE && user_config.base_overlay < BOV_COUNT) {
             set_layer_color(base_overlay_ledmaps, user_config.base_overlay, true);
@@ -440,8 +443,6 @@ bool rgb_matrix_indicators_user(void) {
             led_t led_state = host_keyboard_led_state();
             LED_TOGGLE(18, C_CYAN, C_CYAN_DARK, led_state.num_lock);
         }
-    } else if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
-        rgb_matrix_set_color_all(0, 0, 0);
     }
     return true;
 }
