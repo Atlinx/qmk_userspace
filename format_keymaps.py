@@ -2,8 +2,9 @@
 """format_keymaps.py
 
 Reformats QMK `.c` files in this repository to a consistent style.  Any `.c`
-file containing a `keymaps` array or an `ledmap` array is processed; files
-with neither are skipped.
+file containing a `PROGMEM` array whose name ends in `keymaps` or `ledmaps` is
+processed (e.g. `keymaps`, `base_overlay_ledmaps`, `ledmaps`); files with
+neither are skipped.
 
   * **Globally aligned columns** -- column widths are computed across *every*
     layer in a keymap, so column N sits at the same character offset in every
@@ -37,8 +38,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SEARCH_DIRS = ("keyboards", "users", "layouts")
 
-ROW_INDENT = "        "    # 8 spaces for matrix rows
-HEADER_INDENT = "    "      # 4 spaces for the [NAME] = LAYOUT_x( line
+ROW_INDENT = "    "    # 4 spaces for matrix rows
+HEADER_INDENT = "  "   # 2 spaces for the [NAME] = LAYOUT_x( line
 
 # Matches the start of a layer definition, e.g.  [_BASE] = LAYOUT_planck_mit(
 LAYER_START_RE = re.compile(r"\[(\w+)\]\s*=\s*(LAYOUT_\w+)\(")
@@ -67,20 +68,22 @@ def strip_comments(line: str) -> str:
     return line
 
 
-def find_region(text: str) -> tuple[int, int] | None:
-    """Return [start, end) of the keymaps array, or None if not found."""
-    off = text.find("// clang-format off")
-    on = text.find("// clang-format on")
-    if off != -1 and on != -1 and off < on:
-        return off, on + len("// clang-format on")
-    m = re.search(r"const\s+uint16_t\s+PROGMEM\s+[^\s]*keymaps", text)
-    if not m:
-        return None
-    start = m.start()
-    end = text.find("};", start)
-    if end == -1:
-        return None
-    return start, end + len("};")
+ARRAY_DECL_RE = re.compile(r"const\s+\w+\s+PROGMEM\s+([A-Za-z_]\w*)\s*\[")
+
+
+def find_array_regions(text: str) -> list[tuple[str, int, int]]:
+    """Return (name, start, end) for every PROGMEM array named *keymaps or *ledmaps."""
+    regions = []
+    for m in ARRAY_DECL_RE.finditer(text):
+        name = m.group(1)
+        if not (name.endswith("keymaps") or name.endswith("ledmaps")):
+            continue
+        start = m.start()
+        end = text.find("};", start)
+        if end == -1:
+            continue
+        regions.append((name, start, end + len("};")))
+    return regions
 
 
 def parse_layers(region: str) -> list[tuple[int, int, str, str, str]]:
@@ -199,37 +202,7 @@ def render_layer(name: str, macro: str, rows: list[list[str]], cols: int, widths
     return "\n".join(lines)
 
 
-def format_region(region: str) -> str | None:
-    layers = parse_layers(region)
-    if not layers:
-        return None
-    parsed = [(name, parse_rows(body)) for _, _, name, _, body in layers]
-    widths, cols = compute_widths(parsed)
-
-    out: list[str] = []
-    prev = 0
-    for idx, (start, end, name, macro, _body) in enumerate(layers):
-        out.append(region[prev:start])  # keep comments / blank lines verbatim
-        out.append(render_layer(name, macro, parsed[idx][1], cols, widths))
-        prev = end
-    out.append(region[prev:])
-    return "".join(out)
-
-
-LEDMAP_RE = re.compile(r"const\s+uint8_t\s+PROGMEM\s+[^\s]*ledmap")
 LEDMAP_LAYER_RE = re.compile(r"\[(\w+)\]\s*=\s*\{")
-
-
-def find_ledmap_region(text: str) -> tuple[int, int] | None:
-    """Return [start, end) of the ledmap array, or None if not found."""
-    m = LEDMAP_RE.search(text)
-    if not m:
-        return None
-    start = m.start()
-    end = text.find("};", start)
-    if end == -1:
-        return None
-    return start, end + len("};")
 
 
 def parse_ledmap_layers(region: str) -> list[tuple[int, int, str, str]]:
@@ -288,21 +261,39 @@ def render_ledmap_layer(name: str, rows: list[list[str]], cols: int, widths: lis
     return "\n".join(lines)
 
 
-def format_ledmap_region(region: str) -> str | None:
-    layers = parse_ledmap_layers(region)
-    if not layers:
-        return None
-    parsed = [(name, parse_ledmap_body(body)) for _, _, name, body in layers]
-    widths, cols = compute_widths(parsed)
+def format_array_region(region: str) -> str | None:
+    """Format one `*keymaps`/`*ledmaps` array, auto-detecting the layer style."""
+    # Keymap style: layers are `[NAME] = LAYOUT_x( ... )`.
+    layers = parse_layers(region)
+    if layers:
+        parsed = [(name, parse_rows(body)) for _, _, name, _, body in layers]
+        widths, cols = compute_widths(parsed)
 
-    out: list[str] = []
-    prev = 0
-    for idx, (start, end, name, _body) in enumerate(layers):
-        out.append(region[prev:start])  # keep the declaration line verbatim
-        out.append(render_ledmap_layer(name, parsed[idx][1], cols, widths))
-        prev = end
-    out.append(region[prev:])
-    return "".join(out)
+        out: list[str] = []
+        prev = 0
+        for idx, (start, end, name, macro, _body) in enumerate(layers):
+            out.append(region[prev:start])  # keep comments / blank lines verbatim
+            out.append(render_layer(name, macro, parsed[idx][1], cols, widths))
+            prev = end
+        out.append(region[prev:])
+        return "".join(out)
+
+    # Ledmap style: layers are `[NAME] = { ... }`.
+    llayers = parse_ledmap_layers(region)
+    if llayers:
+        parsed = [(name, parse_ledmap_body(body)) for _, _, name, body in llayers]
+        widths, cols = compute_widths(parsed)
+
+        out: list[str] = []
+        prev = 0
+        for idx, (start, end, name, _body) in enumerate(llayers):
+            out.append(region[prev:start])  # keep the declaration line verbatim
+            out.append(render_ledmap_layer(name, parsed[idx][1], cols, widths))
+            prev = end
+        out.append(region[prev:])
+        return "".join(out)
+
+    return None
 
 
 def format_file(path: Path) -> tuple[str | None, str]:
@@ -310,18 +301,9 @@ def format_file(path: Path) -> tuple[str | None, str]:
     result = text
     found = False
 
-    region = find_region(text)
-    if region is not None:
-        start, end = region
-        new_region = format_region(text[start:end])
-        if new_region is not None:
-            found = True
-            result = result[:start] + new_region + result[end:]
-
-    lregion = find_ledmap_region(result)
-    if lregion is not None:
-        start, end = lregion
-        new_region = format_ledmap_region(result[start:end])
+    # Apply replacements from last to first so earlier offsets stay valid.
+    for _name, start, end in reversed(find_array_regions(text)):
+        new_region = format_array_region(result[start:end])
         if new_region is not None:
             found = True
             result = result[:start] + new_region + result[end:]

@@ -1,7 +1,6 @@
 #pragma once
 
 #define RGB_MATRIX_DEFAULT_SPD 60
-#define MIDI_BASIC
 #define DEBOUNCE 10
 #define USB_SUSPEND_WAKEUP_DELAY 0
 
