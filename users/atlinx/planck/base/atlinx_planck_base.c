@@ -15,18 +15,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   // Lower
   [L_LOWER] = LAYOUT_planck_mit(
-    KC_TILD       , KC_EXLM    , KC_AT  , KC_HASH      , KC_DLR     , KC_PERC  , KC_CIRC     , KC_AMPR     , KC_ASTR    , KC_LPRN     , KC_RPRN     , X______,
-    KC_DEL        , MS_WHLD    , X______, MS_WHLU      , X______    , X______  , X______     , KC_UNDS     , KC_PLUS    , KC_LCBR     , KC_RCBR     , KC_PIPE,
-    MO(L_LOWSHFT) , MS_BTN1    , MS_BTN3, MS_BTN2      , KC_LSFT    , X______  , X______     , X______     , X______    , KC_HOME     , KC_END      , X______,
-    X______       , X______    , X______, X______      , _______    , _______                , _______     , X______    , X______     , X______     , X______
+    KC_TILD       , KC_EXLM    , KC_AT  , KC_HASH      , KC_DLR     , KC_PERC  , KC_CIRC     , KC_AMPR     , KC_ASTR    , KC_LPRN     , KC_RPRN     , _______,
+    KC_DEL        , MS_WHLD    , _______, MS_WHLU      , _______    , _______  , _______     , KC_UNDS     , KC_PLUS    , KC_LCBR     , KC_RCBR     , KC_PIPE,
+    MO(L_LOWSHFT) , MS_BTN1    , MS_BTN3, MS_BTN2      , KC_LSFT    , _______  , _______     , _______     , _______    , KC_HOME     , KC_END      , _______,
+    _______       , _______    , _______, _______      , _______    , _______                , _______     , _______    , _______     , _______     , _______
   ),
 
   // Raise
   [L_RAISE] = LAYOUT_planck_mit(
-    KC_GRV        , KC_1       , KC_2   , KC_3         , KC_4       , KC_5     , KC_6        , KC_7        , KC_8       , KC_9        , KC_0        , X______,
+    KC_GRV        , KC_1       , KC_2   , KC_3         , KC_4       , KC_5     , KC_6        , KC_7        , KC_8       , KC_9        , KC_0        , _______,
     KC_DEL        , KC_F1      , KC_F2  , KC_F3        , KC_F4      , KC_F5    , KC_F6       , KC_MINS     , KC_EQL     , KC_LBRC     , KC_RBRC     , KC_BSLS,
-    X______       , KC_F7      , KC_F8  , KC_F9        , KC_F10     , KC_F11   , KC_F12      , X______     , X______    , X______     , X______     , X______,
-    X______       , X______    , X______, MO(L_ACCENTS), _______    , _______                , _______     , X______    , X______     , X______     , X______
+    _______       , KC_F7      , KC_F8  , KC_F9        , KC_F10     , KC_F11   , KC_F12      , _______     , _______    , _______     , _______     , _______,
+    _______       , _______    , _______, MO(L_ACCENTS), _______    , _______                , _______     , _______    , _______     , _______     , _______
   ),
 
   // Adjust
