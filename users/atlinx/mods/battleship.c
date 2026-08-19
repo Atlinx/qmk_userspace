@@ -19,7 +19,7 @@ typedef enum {
 typedef struct {
   uint8_t len;
   uint8_t remaining;                     // unhit cells
-  uint8_t cells[BSHIP_MAX_SHIP_LEN][2];  // [i] = {col, row}
+  uint8_t cells[BSHIP_MAX_SHIP_LEN][2];  // [i] = {x, y}
 } bship_placed_ship_t;
 
 typedef enum {
@@ -44,8 +44,8 @@ static uint8_t bship_current_player;  // placer / attacker
 static uint8_t bship_current_ship;    // ship being placed
 static uint8_t bship_rotation;        // 0..3 (CW quarter turns)
 static uint8_t bship_cursor_board;    // board the cursor is on
-static uint8_t bship_cursor_c;
-static uint8_t bship_cursor_r;
+static uint8_t bship_cursor_x;
+static uint8_t bship_cursor_y;
 static bool bship_running;
 
 static const RGB c_p1 = BSHIP_COLOR_P1;
@@ -67,8 +67,8 @@ static uint8_t bship_board_x(uint8_t player) {
 static uint8_t bship_board_y(uint8_t player) {
   return player == 0 ? BSHIP_P1_Y : BSHIP_P2_Y;
 }
-static uint16_t bship_cell_led(uint8_t player, uint8_t c, uint8_t r) {
-  return mat_xy(bship_board_x(player) + c, bship_board_y(player) + r);
+static uint16_t bship_cell_led(uint8_t player, uint8_t x, uint8_t y) {
+  return xy_to_led(bship_board_x(player) + x, bship_board_y(player) + y);
 }
 
 static RGB bship_player_color(uint8_t player) {
@@ -85,26 +85,26 @@ static RGB bship_board_empty_color(uint8_t board) {
   return (RGB){0, 0, 0};
 }
 
-// Resolve a physical matrix position to (board, col, row), or return
+// Resolve a physical matrix position to (board, x, y), or return
 // false if it isn't one of the board cells.
-static bool bship_cell_from_pos(uint8_t row, uint8_t col, uint8_t* board,
-                                uint8_t* c, uint8_t* r) {
-  uint8_t y, x;
-  if (!mat_to_phys(row, col, &y, &x)) {
+static bool bship_cell_from_pos(uint8_t x, uint8_t y, uint8_t* board,
+                                uint8_t* bx, uint8_t* by) {
+  uint8_t px, py;
+  if (!mat_log_to_phys(x, y, &px, &py)) {
     return false;
   }
-  if (x >= BSHIP_P1_X && x < BSHIP_P1_X + BSHIP_COLS && y >= BSHIP_P1_Y &&
-      y < BSHIP_P1_Y + BSHIP_ROWS) {
+  if (px >= BSHIP_P1_X && px < BSHIP_P1_X + BSHIP_COLS && py >= BSHIP_P1_Y &&
+      py < BSHIP_P1_Y + BSHIP_ROWS) {
     *board = 0;
-    *c = x - BSHIP_P1_X;
-    *r = y - BSHIP_P1_Y;
+    *bx = px - BSHIP_P1_X;
+    *by = py - BSHIP_P1_Y;
     return true;
   }
-  if (x >= BSHIP_P2_X && x < BSHIP_P2_X + BSHIP_COLS && y >= BSHIP_P2_Y &&
-      y < BSHIP_P2_Y + BSHIP_ROWS) {
+  if (px >= BSHIP_P2_X && px < BSHIP_P2_X + BSHIP_COLS && py >= BSHIP_P2_Y &&
+      py < BSHIP_P2_Y + BSHIP_ROWS) {
     *board = 1;
-    *c = x - BSHIP_P2_X;
-    *r = y - BSHIP_P2_Y;
+    *bx = px - BSHIP_P2_X;
+    *by = py - BSHIP_P2_Y;
     return true;
   }
   return false;
@@ -159,20 +159,20 @@ static void bship_clamp_cursor(void) {
     if (ry < miny) miny = ry;
     if (ry > maxy) maxy = ry;
   }
-  int8_t cmin = -minx;
-  int8_t cmax = (int8_t)BSHIP_COLS - 1 - maxx;
-  int8_t rmin = -miny;
-  int8_t rmax = (int8_t)BSHIP_ROWS - 1 - maxy;
-  if ((int8_t)bship_cursor_c < cmin) bship_cursor_c = (uint8_t)cmin;
-  if ((int8_t)bship_cursor_c > cmax) bship_cursor_c = (uint8_t)cmax;
-  if ((int8_t)bship_cursor_r < rmin) bship_cursor_r = (uint8_t)rmin;
-  if ((int8_t)bship_cursor_r > rmax) bship_cursor_r = (uint8_t)rmax;
+  int8_t xmin = -minx;
+  int8_t xmax = (int8_t)BSHIP_COLS - 1 - maxx;
+  int8_t ymin = -miny;
+  int8_t ymax = (int8_t)BSHIP_ROWS - 1 - maxy;
+  if ((int8_t)bship_cursor_x < xmin) bship_cursor_x = (uint8_t)xmin;
+  if ((int8_t)bship_cursor_x > xmax) bship_cursor_x = (uint8_t)xmax;
+  if ((int8_t)bship_cursor_y < ymin) bship_cursor_y = (uint8_t)ymin;
+  if ((int8_t)bship_cursor_y > ymax) bship_cursor_y = (uint8_t)ymax;
 }
 
-static void bship_set_cursor(uint8_t board, uint8_t c, uint8_t r) {
+static void bship_set_cursor(uint8_t board, uint8_t x, uint8_t y) {
   bship_cursor_board = board;
-  bship_cursor_c = c;
-  bship_cursor_r = r;
+  bship_cursor_x = x;
+  bship_cursor_y = y;
 }
 
 // Finalize the current ship at the cursor position on the active board.
@@ -186,9 +186,9 @@ static bool bship_place_ship(void) {
     bship_rotated_offset(bship_ships[bship_current_ship][i].x,
                          bship_ships[bship_current_ship][i].y, bship_rotation,
                          &rx, &ry);
-    uint8_t c = (uint8_t)((int16_t)bship_cursor_c + rx);
-    uint8_t r = (uint8_t)((int16_t)bship_cursor_r + ry);
-    if (bship_board[p][r][c] == BSHIP_CELL_SHIP) {
+    uint8_t x = (uint8_t)((int16_t)bship_cursor_x + rx);
+    uint8_t y = (uint8_t)((int16_t)bship_cursor_y + ry);
+    if (bship_board[p][y][x] == BSHIP_CELL_SHIP) {
       return false;
     }
   }
@@ -201,11 +201,11 @@ static bool bship_place_ship(void) {
     bship_rotated_offset(bship_ships[bship_current_ship][i].x,
                          bship_ships[bship_current_ship][i].y, bship_rotation,
                          &rx, &ry);
-    uint8_t c = (uint8_t)((int16_t)bship_cursor_c + rx);
-    uint8_t r = (uint8_t)((int16_t)bship_cursor_r + ry);
-    bship_board[p][r][c] = BSHIP_CELL_SHIP;
-    ps->cells[i][0] = c;
-    ps->cells[i][1] = r;
+    uint8_t x = (uint8_t)((int16_t)bship_cursor_x + rx);
+    uint8_t y = (uint8_t)((int16_t)bship_cursor_y + ry);
+    bship_board[p][y][x] = BSHIP_CELL_SHIP;
+    ps->cells[i][0] = x;
+    ps->cells[i][1] = y;
   }
   bship_placed_count[p]++;
 
@@ -233,11 +233,11 @@ static bool bship_place_ship(void) {
   return true;
 }
 
-static void bship_register_hit(uint8_t p, uint8_t col, uint8_t row) {
+static void bship_register_hit(uint8_t p, uint8_t x, uint8_t y) {
   for (uint8_t i = 0; i < bship_placed_count[p]; i++) {
     for (uint8_t j = 0; j < bship_placed[p][i].len; j++) {
-      if (bship_placed[p][i].cells[j][0] == col &&
-          bship_placed[p][i].cells[j][1] == row) {
+      if (bship_placed[p][i].cells[j][0] == x &&
+          bship_placed[p][i].cells[j][1] == y) {
         if (bship_placed[p][i].remaining > 0) {
           bship_placed[p][i].remaining--;
         }
@@ -261,23 +261,23 @@ static void bship_attack(void) {
     return;
   }
   uint8_t target = 1 - bship_current_player;  // board being attacked
-  uint8_t c = bship_cursor_c;
-  uint8_t r = bship_cursor_r;
-  bship_cell_t cell = bship_board[target][r][c];
+  uint8_t x = bship_cursor_x;
+  uint8_t y = bship_cursor_y;
+  bship_cell_t cell = bship_board[target][y][x];
   if (cell == BSHIP_CELL_HIT || cell == BSHIP_CELL_MISS) {
     return;  // already attacked
   }
 
   if (cell == BSHIP_CELL_SHIP) {
-    bship_board[target][r][c] = BSHIP_CELL_HIT;
-    bship_register_hit(target, c, r);
+    bship_board[target][y][x] = BSHIP_CELL_HIT;
+    bship_register_hit(target, x, y);
     if (bship_all_destroyed(target)) {
       bship_score[bship_current_player]++;  // winner gains a point
       bship_phase = BSHIP_PHASE_REVEAL;
       return;
     }
   } else {
-    bship_board[target][r][c] = BSHIP_CELL_MISS;
+    bship_board[target][y][x] = BSHIP_CELL_MISS;
   }
 
   // Switch turn.
@@ -302,21 +302,21 @@ static void bship_draw_placement(void) {
   uint8_t opp = 1 - p;
 
   // Opponent's half is inactive (no grid while not being interacted with).
-  for (uint8_t r = 0; r < BSHIP_ROWS; r++) {
-    for (uint8_t c = 0; c < BSHIP_COLS; c++) {
+  for (uint8_t y = 0; y < BSHIP_ROWS; y++) {
+    for (uint8_t x = 0; x < BSHIP_COLS; x++) {
       RGB col = bship_board_empty_color(opp);
-      rgb_matrix_set_color(bship_cell_led(opp, c, r), col.r, col.g, col.b);
+      rgb_matrix_set_color(bship_cell_led(opp, x, y), col.r, col.g, col.b);
     }
   }
 
   // Active board: placed ships + empty cells.
-  for (uint8_t r = 0; r < BSHIP_ROWS; r++) {
-    for (uint8_t c = 0; c < BSHIP_COLS; c++) {
+  for (uint8_t y = 0; y < BSHIP_ROWS; y++) {
+    for (uint8_t x = 0; x < BSHIP_COLS; x++) {
       RGB col = bship_board_empty_color(p);
-      if (bship_board[p][r][c] == BSHIP_CELL_SHIP) {
+      if (bship_board[p][y][x] == BSHIP_CELL_SHIP) {
         col = bship_player_color(p);
       }
-      rgb_matrix_set_color(bship_cell_led(p, c, r), col.r, col.g, col.b);
+      rgb_matrix_set_color(bship_cell_led(p, x, y), col.r, col.g, col.b);
     }
   }
 
@@ -328,9 +328,9 @@ static void bship_draw_placement(void) {
     bship_rotated_offset(bship_ships[bship_current_ship][i].x,
                          bship_ships[bship_current_ship][i].y, bship_rotation,
                          &rx, &ry);
-    uint8_t c = (uint8_t)((int16_t)bship_cursor_c + rx);
-    uint8_t r = (uint8_t)((int16_t)bship_cursor_r + ry);
-    rgb_matrix_set_color(bship_cell_led(p, c, r), c_cursor.r, c_cursor.g,
+    uint8_t x = (uint8_t)((int16_t)bship_cursor_x + rx);
+    uint8_t y = (uint8_t)((int16_t)bship_cursor_y + ry);
+    rgb_matrix_set_color(bship_cell_led(p, x, y), c_cursor.r, c_cursor.g,
                          c_cursor.b);
   }
 }
@@ -338,10 +338,10 @@ static void bship_draw_placement(void) {
 static void bship_draw_battle(void) {
   // Ships are hidden; only hits (green) and misses (red) are shown.
   for (uint8_t p = 0; p < 2; p++) {
-    for (uint8_t r = 0; r < BSHIP_ROWS; r++) {
-      for (uint8_t c = 0; c < BSHIP_COLS; c++) {
+    for (uint8_t y = 0; y < BSHIP_ROWS; y++) {
+      for (uint8_t x = 0; x < BSHIP_COLS; x++) {
         RGB col = bship_board_empty_color(p);
-        switch (bship_board[p][r][c]) {
+        switch (bship_board[p][y][x]) {
           case BSHIP_CELL_HIT:
             col = c_hit;
             break;
@@ -351,7 +351,7 @@ static void bship_draw_battle(void) {
           default:
             break;
         }
-        rgb_matrix_set_color(bship_cell_led(p, c, r), col.r, col.g, col.b);
+        rgb_matrix_set_color(bship_cell_led(p, x, y), col.r, col.g, col.b);
       }
     }
   }
@@ -360,10 +360,10 @@ static void bship_draw_battle(void) {
 static void bship_draw_reveal(void) {
   // Reveal all ships in their owner's color, plus hits/misses.
   for (uint8_t p = 0; p < 2; p++) {
-    for (uint8_t r = 0; r < BSHIP_ROWS; r++) {
-      for (uint8_t c = 0; c < BSHIP_COLS; c++) {
+    for (uint8_t y = 0; y < BSHIP_ROWS; y++) {
+      for (uint8_t x = 0; x < BSHIP_COLS; x++) {
         RGB col = c_empty;
-        switch (bship_board[p][r][c]) {
+        switch (bship_board[p][y][x]) {
           case BSHIP_CELL_SHIP:
             col = bship_player_color(p);
             break;
@@ -376,7 +376,7 @@ static void bship_draw_reveal(void) {
           default:
             break;
         }
-        rgb_matrix_set_color(bship_cell_led(p, c, r), col.r, col.g, col.b);
+        rgb_matrix_set_color(bship_cell_led(p, x, y), col.r, col.g, col.b);
       }
     }
   }
@@ -385,10 +385,10 @@ static void bship_draw_reveal(void) {
 static void bship_draw_scores(void) {
   for (uint8_t i = 0; i < BSHIP_MAX_SCORE; i++) {
     RGB col = (i < bship_score[0]) ? c_p1 : (RGB){0, 0, 0};
-    rgb_matrix_set_color(mat_xy(bship_score_p1[i].x, bship_score_p1[i].y),
+    rgb_matrix_set_color(xy_to_led(bship_score_p1[i].x, bship_score_p1[i].y),
                          col.r, col.g, col.b);
     col = (i < bship_score[1]) ? c_p2 : (RGB){0, 0, 0};
-    rgb_matrix_set_color(mat_xy(bship_score_p2[i].x, bship_score_p2[i].y),
+    rgb_matrix_set_color(xy_to_led(bship_score_p2[i].x, bship_score_p2[i].y),
                          col.r, col.g, col.b);
   }
 }
@@ -417,9 +417,9 @@ static void bship_draw(void) {
 
 static void bship_start_placement(void) {
   for (uint8_t p = 0; p < 2; p++) {
-    for (uint8_t r = 0; r < BSHIP_ROWS; r++) {
-      for (uint8_t c = 0; c < BSHIP_COLS; c++) {
-        bship_board[p][r][c] = BSHIP_CELL_EMPTY;
+    for (uint8_t y = 0; y < BSHIP_ROWS; y++) {
+      for (uint8_t x = 0; x < BSHIP_COLS; x++) {
+        bship_board[p][y][x] = BSHIP_CELL_EMPTY;
       }
     }
     bship_placed_count[p] = 0;
@@ -455,22 +455,22 @@ bool process_record_battleship(uint16_t keycode, keyrecord_t* record) {
       bship_advance();
       return false;
     }
-    uint8_t board, c, r;
-    if (bship_cell_from_pos(record->event.key.row, record->event.key.col,
-                            &board, &c, &r)) {
+    uint8_t board, bx, by;
+    if (bship_cell_from_pos(record->event.key.col, record->event.key.row,
+                            &board, &bx, &by)) {
       if (bship_phase == BSHIP_PHASE_PLACE) {
         if (board == bship_current_player) {
           bship_cursor_board = board;
-          bship_cursor_c = c;
-          bship_cursor_r = r;
+          bship_cursor_x = bx;
+          bship_cursor_y = by;
           bship_clamp_cursor();
         }
       } else if (bship_phase == BSHIP_PHASE_BATTLE) {
         uint8_t target = 1 - bship_current_player;
         if (board == target) {
           bship_cursor_board = board;
-          bship_cursor_c = c;
-          bship_cursor_r = r;
+          bship_cursor_x = bx;
+          bship_cursor_y = by;
           bship_attack();
         }
       }

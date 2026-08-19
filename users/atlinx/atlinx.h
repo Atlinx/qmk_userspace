@@ -17,7 +17,7 @@ typedef enum {
   AK_BASE_TOGG,
 
   AK_END
-} AtlinxKeycode;
+} atlinx_keycode_t;
 
 #undef SAFE_RANGE
 #define SAFE_RANGE AK_END
@@ -112,24 +112,67 @@ typedef enum {
   } while (0)
 
 /**
- * @brief Converts matrix coordinates (X, Y) to a keyboard matrix array index.
+ * @brief Converts a physical matrix position (X, Y) to an index on a
+ * contiguous array that represents the physical matrix of the keyboard without
+ * any padding (ex. the ledmaps array, which does not have empty cells).
  * @param x The matrix column.
  * @param y The matrix row.
+ *
+ * Example of unpadded array:
+ * ```text
+ * X X X X
+ * X X X X
+ * X X   X
+ *     '-- no padding, only includes keys on the keyboard
+ *
+ * Entire array size is 4 + 4 + 3 = 7
+ *
+ * ```
  */
-uint8_t mat_xy(uint8_t x, uint8_t y);
+uint8_t mat_phys_to_index(uint8_t x, uint8_t y);
 
 /**
- * @brief Maps a hardware matrix position to a physical (row, col).
+ * @brief Alias for `mat_phys_to_index`
+ */
+static inline uint8_t xy_to_led(uint8_t x, uint8_t y) {
+  return mat_phys_to_index(x, y);
+}
+
+/**
+ * @brief Converts a physical matrix position (X, Y) to an index on a
+ * contiguous array that represents the physical matrix of the keyboard with
+ * padding (ex. the keymaps array, which uses KC_NO for empty cells).
+ * @param x The matrix column.
+ * @param y The matrix row.
+ *
+ * Example of padded array:
+ *
+ * ```text
+ * X X X X
+ * X X X X
+ * X X _ X
+ *     '-- padding for keys that takeup multiple keys
+ *         (ex. 2u spacebar on Planck MIT)
+ *
+ * Entire array size is 4 x 3 = 12
+ *
+ * ```
+ */
+uint8_t mat_phys_to_padded_index(uint8_t x, uint8_t y);
+
+/**
+ * @brief Converts a logical matrix position (X, Y) to a physical position (X,
+ * Y).
  *
  * The default (weak) implementation in atlinx.c assumes the matrix grid
  * matches the physical grid (identity). Keyboards whose hardware matrix
  * differs (e.g. the planck EZ 8x6 matrix) override this in their
- * keymap.c. Returns true and writes the physical (row, col) on success.
- * @param mrow The matrix row.
- * @param mcol The matrix column.
- * @param phys_row Output physical row.
- * @param phys_col Output physical column.
+ * keymap.c. Returns true and writes the physical (x, y) on success.
+ * @param log_x The logical matrix column (x).
+ * @param log_y The logical matrix row (y).
+ * @param phys_x Output physical column (x).
+ * @param phys_y Output physical row (y).
  */
-bool mat_to_phys(uint8_t mrow, uint8_t mcol, uint8_t* phys_row,
-                 uint8_t* phys_col);
+bool mat_log_to_phys(uint8_t log_x, uint8_t log_y, uint8_t* phys_x,
+                     uint8_t* phys_y);
 #pragma endregion

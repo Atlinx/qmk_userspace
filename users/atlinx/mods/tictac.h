@@ -13,7 +13,7 @@
 //   rgb_matrix_indicators_tictac()-> from rgb_matrix_indicators_user()
 //
 // Rendering assumes a row-major ortholinear LED layout, i.e. LED index
-// == (row * PHYSICAL_COLS) + col. Override TICTAC_XY_TO_LED if a board
+// == (y * PHYSICAL_COLS) + x. Override TICTAC_XY_TO_LED if a board
 // uses a different LED ordering.
 //
 // Unlike snake, this game defines NO custom keycodes. Each of the 3x3
@@ -24,14 +24,14 @@
 // ------------------------------------------------------------------
 
 // --- Overridable configuration ---
-// Board geometry. Cell (row, col) is rendered at LED position
-// (TICTAC_BOARD_X + col * TICTAC_CELL_SPACING_X,
-//  TICTAC_BOARD_Y + row * TICTAC_CELL_SPACING_Y).
+// Board geometry. Cell (x, y) is rendered at LED position
+// (TICTAC_BOARD_X + x * TICTAC_CELL_SPACING_X,
+//  TICTAC_BOARD_Y + y * TICTAC_CELL_SPACING_Y).
 #ifndef TICTAC_BOARD_X
-#define TICTAC_BOARD_X 4  // column of the top-left board cell
+#define TICTAC_BOARD_X 4  // x (column) of the top-left board cell
 #endif
 #ifndef TICTAC_BOARD_Y
-#define TICTAC_BOARD_Y 0  // row of the top-left board cell
+#define TICTAC_BOARD_Y 0  // y (row) of the top-left board cell
 #endif
 #ifndef TICTAC_CELL_SPACING_X
 #define TICTAC_CELL_SPACING_X 1  // horizontal distance between cells

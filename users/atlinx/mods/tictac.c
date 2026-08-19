@@ -14,7 +14,7 @@ typedef enum {
   TICTAC_CELL_O,
 } tictac_cell_t;
 
-// 3x3 game board, indexed [row][col].
+// 3x3 game board, indexed [y][x].
 static tictac_cell_t tictac_board[3][3];
 
 // Score square positions, configured as arrays of (x, y) tuples.
@@ -31,27 +31,27 @@ static uint8_t first_player;    // who starts each round
 static bool game_over;
 static bool tictac_running;
 
-// Resolve a physical matrix position to a board cell (r, c), or return
+// Resolve a physical matrix position to a board cell (bx, by), or return
 // false if it isn't one of the 3x3 board cells.
-static bool tictac_cell_from_pos(uint8_t row, uint8_t col, uint8_t* r,
-                                 uint8_t* c) {
-  uint8_t y, x;
-  if (!mat_to_phys(row, col, &y, &x)) {
+static bool tictac_cell_from_pos(uint8_t x, uint8_t y, uint8_t* bx,
+                                 uint8_t* by) {
+  uint8_t px, py;
+  if (!mat_log_to_phys(x, y, &px, &py)) {
     return false;
   }
-  if (y < TICTAC_BOARD_Y || x < TICTAC_BOARD_X) {
+  if (py < TICTAC_BOARD_Y || px < TICTAC_BOARD_X) {
     return false;
   }
-  uint8_t dr = y - TICTAC_BOARD_Y;
-  uint8_t dc = x - TICTAC_BOARD_X;
-  if (dr >= 3 || dc >= 3) {
+  uint8_t dy = py - TICTAC_BOARD_Y;
+  uint8_t dx = px - TICTAC_BOARD_X;
+  if (dy >= 3 || dx >= 3) {
     return false;
   }
-  if (dr % TICTAC_CELL_SPACING_Y != 0 || dc % TICTAC_CELL_SPACING_X != 0) {
+  if (dy % TICTAC_CELL_SPACING_Y != 0 || dx % TICTAC_CELL_SPACING_X != 0) {
     return false;
   }
-  *r = dr / TICTAC_CELL_SPACING_Y;
-  *c = dc / TICTAC_CELL_SPACING_X;
+  *by = dy / TICTAC_CELL_SPACING_Y;
+  *bx = dx / TICTAC_CELL_SPACING_X;
   return true;
 }
 
@@ -82,9 +82,9 @@ static bool tictac_has_win(tictac_cell_t player) {
 }
 
 static bool tictac_board_full(void) {
-  for (uint8_t r = 0; r < 3; r++) {
-    for (uint8_t c = 0; c < 3; c++) {
-      if (tictac_board[r][c] == TICTAC_CELL_EMPTY) {
+  for (uint8_t y = 0; y < 3; y++) {
+    for (uint8_t x = 0; x < 3; x++) {
+      if (tictac_board[y][x] == TICTAC_CELL_EMPTY) {
         return false;
       }
     }
@@ -93,9 +93,9 @@ static bool tictac_board_full(void) {
 }
 
 static void tictac_reset_round(void) {
-  for (uint8_t r = 0; r < 3; r++) {
-    for (uint8_t c = 0; c < 3; c++) {
-      tictac_board[r][c] = TICTAC_CELL_EMPTY;
+  for (uint8_t y = 0; y < 3; y++) {
+    for (uint8_t x = 0; x < 3; x++) {
+      tictac_board[y][x] = TICTAC_CELL_EMPTY;
     }
   }
   game_over = false;
@@ -112,19 +112,19 @@ static void tictac_reset(void) {
   tictac_reset_round();
 }
 
-static void tictac_place(uint8_t row, uint8_t col) {
+static void tictac_place(uint8_t x, uint8_t y) {
   // When a round has finished, clicking any cell starts a new one
   // (scores are kept).
   if (game_over) {
     tictac_reset_round();
     return;
   }
-  if (tictac_board[row][col] != TICTAC_CELL_EMPTY) {
+  if (tictac_board[y][x] != TICTAC_CELL_EMPTY) {
     return;
   }
 
   tictac_cell_t player = (current_player == 0) ? TICTAC_CELL_X : TICTAC_CELL_O;
-  tictac_board[row][col] = player;
+  tictac_board[y][x] = player;
 
   if (tictac_has_win(player)) {
     if (current_player == 0) {
@@ -154,17 +154,17 @@ static void tictac_draw(void) {
   rgb_matrix_set_color_all(0, 0, 0);
 
   // Board cells.
-  for (uint8_t r = 0; r < 3; r++) {
-    for (uint8_t c = 0; c < 3; c++) {
-      uint8_t x = TICTAC_BOARD_X + c * TICTAC_CELL_SPACING_X;
-      uint8_t y = TICTAC_BOARD_Y + r * TICTAC_CELL_SPACING_Y;
+  for (uint8_t y = 0; y < 3; y++) {
+    for (uint8_t x = 0; x < 3; x++) {
+      uint8_t lx = TICTAC_BOARD_X + x * TICTAC_CELL_SPACING_X;
+      uint8_t ly = TICTAC_BOARD_Y + y * TICTAC_CELL_SPACING_Y;
       RGB col = c_empty;
-      if (tictac_board[r][c] == TICTAC_CELL_X) {
+      if (tictac_board[y][x] == TICTAC_CELL_X) {
         col = c_x;
-      } else if (tictac_board[r][c] == TICTAC_CELL_O) {
+      } else if (tictac_board[y][x] == TICTAC_CELL_O) {
         col = c_o;
       }
-      rgb_matrix_set_color(mat_xy(x, y), col.r, col.g, col.b);
+      rgb_matrix_set_color(xy_to_led(lx, ly), col.r, col.g, col.b);
     }
   }
 
@@ -175,7 +175,7 @@ static void tictac_draw(void) {
     if (i < tictac_score_o_count) {
       col = c_o;
     }
-    rgb_matrix_set_color(mat_xy(tictac_score_o[i].x, tictac_score_o[i].y),
+    rgb_matrix_set_color(xy_to_led(tictac_score_o[i].x, tictac_score_o[i].y),
                          col.r, col.g, col.b);
   }
   for (uint8_t i = 0; i < TICTAC_MAX_SCORE; i++) {
@@ -183,7 +183,7 @@ static void tictac_draw(void) {
     if (i < tictac_score_x_count) {
       col = c_x;
     }
-    rgb_matrix_set_color(mat_xy(tictac_score_x[i].x, tictac_score_x[i].y),
+    rgb_matrix_set_color(xy_to_led(tictac_score_x[i].x, tictac_score_x[i].y),
                          col.r, col.g, col.b);
   }
 
@@ -209,10 +209,10 @@ bool process_record_tictac(uint16_t keycode, keyrecord_t* record) {
   // A cell key press places the current player's mark in the clicked
   // cell, resolved from the key's physical position.
   if (keycode == TICTAC_CELL_KEY) {
-    uint8_t r, c;
-    if (tictac_cell_from_pos(record->event.key.row, record->event.key.col, &r,
-                             &c)) {
-      tictac_place(r, c);
+    uint8_t bx, by;
+    if (tictac_cell_from_pos(record->event.key.col, record->event.key.row, &bx,
+                             &by)) {
+      tictac_place(bx, by);
     }
     return false;
   }

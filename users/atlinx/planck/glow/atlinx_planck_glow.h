@@ -25,4 +25,7 @@ typedef enum {
   L_LOWSHFT,
 
   L_COUNT,
-} AtlinxLayer;
+} atlinx_layer_t;
+
+bool process_record_local(uint16_t keycode, keyrecord_t* record);
+bool rgb_matrix_indicators_local(void);

@@ -1,7 +1,10 @@
 #include "atlinx_planck_glow.h"
 
+#include "action.h"
 #include "action_layer.h"
+#include "atlinx.h"
 #include "color.h"
+#include "debug.h"
 #include "eeconfig.h"
 #include "info_config.h"
 #include "keycodes.h"
@@ -9,7 +12,10 @@
 #include "mods/snake.h"
 #include "mods/tictac.h"
 #include "quantum.h"
+#include "quantum/unicode/unicode.h"
 #include "rgb_matrix.h"
+
+#define ldprintf(...) dprintf("[atlinx_planck_glow] " __VA_ARGS__)
 
 #pragma region MAPS
 // clang-format off
@@ -154,7 +160,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [L_ADJUST] = LAYOUT_planck_mit(
     X______       , TO(L_NUMPAD), TO(L_MOUSE), TO(L_GAMING) , TO(L_BLEND), TO(L_FNS), TO(L_GGST)  , TO(L_SNAKE) , TO(L_TICTAC), TO(L_BATTLESHIP), X______     , X______   ,
     TO(L_BASE)    , AU_TOGG     , MU_TOGG    , MU_NEXT      , X______    , KC_BRID  , KC_BRIU     , X______     , X______     , RM_VALU         , RM_VALD     , QK_BOOT   ,
-    X______       , X______     , X______    , X______      , X______    , LED_LEVEL, AK_CYCLE_BOV, X______     , X______     , AK_BASE_TOGG    , RM_NEXT     , EE_CLR    ,
+    X______       , UC_NEXT     , X______    , X______      , X______    , LED_LEVEL, AK_CYCLE_BOV, X______     , X______     , AK_BASE_TOGG    , RM_NEXT     , EE_CLR    ,
     KC_MPRV       , KC_MNXT     , KC_MSTP    , KC_MPLY      , _______    , _______                , _______     , KC_MUTE     , KC_VOLD         , KC_VOLU     , KC_MPLY
   ),
 
@@ -370,7 +376,7 @@ void set_layer_color(const uint8_t (*maps)[RGB_MATRIX_LED_COUNT][3], int layer,
 }
 #pragma endregion
 
-#pragma region LIFECYCLE
+#pragma region HOOKS
 user_config_t user_config;
 
 void keyboard_post_init_user(void) {
@@ -379,9 +385,9 @@ void keyboard_post_init_user(void) {
   keyboard_post_init_snake();
   keyboard_post_init_tictac();
   keyboard_post_init_battleship();
-  debug_enable = true;
+  // debug_enable = true;
 
-  dprintf("atlinx init: debug enabled (console link alive)\n");
+  ldprintf("keyboard_post_init_user: debug enabled\n");
 }
 
 void eeconfig_init_user(void) {
@@ -391,12 +397,19 @@ void eeconfig_init_user(void) {
   eeconfig_update_user(user_config.raw);
   rgb_matrix_sethsv(HSV_RED);
 }
-#pragma endregion
 
-#pragma region LED INDICATORS
-#ifdef AUDIO_ENABLE
-extern uint8_t music_mode;
-#endif
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+  if (!process_record_snake(keycode, record)) {
+    return false;
+  }
+  if (!process_record_tictac(keycode, record)) {
+    return false;
+  }
+  if (!process_record_battleship(keycode, record)) {
+    return false;
+  }
+  return process_record_local(keycode, record);
+}
 
 void matrix_scan_user(void) { matrix_scan_snake(); }
 
@@ -410,7 +423,16 @@ bool rgb_matrix_indicators_user(void) {
   if (rgb_matrix_indicators_battleship()) {
     return false;
   }
+  return rgb_matrix_indicators_local();
+}
+#pragma endregion
 
+#pragma region LOCAL HOOKS
+#ifdef AUDIO_ENABLE
+extern uint8_t music_mode;
+#endif
+
+bool rgb_matrix_indicators_local(void) {
   int layer_int = biton32(layer_state);
   if (layer_int == L_BASE) {
     if (!user_config.base_rgb_enabled) {
@@ -424,52 +446,66 @@ bool rgb_matrix_indicators_user(void) {
     set_layer_color(ledmaps, layer_int, false);
     if (layer_int == L_ADJUST) {
 #ifdef AUDIO_ENABLE
-      LED_TOGGLE(13, C_RED, C_RED_DARK, audio_is_on());
-      LED_TOGGLE(14, C_ORANGE, C_ORANGE_DARK, is_music_on());
-      RGB mu_mode_color = C______;
+      LED_TOGGLE(xy_to_led(1, 1), C_RED, C_RED_DARK, audio_is_on());  // AU_TOGG
+      LED_TOGGLE(xy_to_led(2, 1), C_ORANGE, C_ORANGE_DARK,
+                 is_music_on());       // MU_TOGG
+      RGB music_mode_color = C______;  // MU_NEXT
       switch (music_mode) {
         case MUSIC_MODE_CHROMATIC:
-          mu_mode_color = (RGB)C_ORANGE;
+          music_mode_color = (RGB)C_ORANGE;
           break;
         case MUSIC_MODE_GUITAR:
-          mu_mode_color = (RGB)C_YELLOW;
+          music_mode_color = (RGB)C_YELLOW;
           break;
         case MUSIC_MODE_VIOLIN:
-          mu_mode_color = (RGB)C_GREEN;
+          music_mode_color = (RGB)C_GREEN;
           break;
         case MUSIC_MODE_MAJOR:
-          mu_mode_color = (RGB)C_CYAN;
+          music_mode_color = (RGB)C_CYAN;
           break;
       }
-      rgb_matrix_set_color(15, mu_mode_color.r, mu_mode_color.g,
-                           mu_mode_color.b);
+      rgb_matrix_set_color(xy_to_led(3, 1), music_mode_color.r,
+                           music_mode_color.g, music_mode_color.b);
 #endif
+      RGB unicode_mode_color = C______;  // UC_NEXT
+      switch (get_unicode_input_mode()) {
+        case UNICODE_MODE_WINCOMPOSE:
+          unicode_mode_color = (RGB)C_CYAN;
+          break;
+        case UNICODE_MODE_MACOS:
+          unicode_mode_color = (RGB)C_WHITE;
+          break;
+        case UNICODE_MODE_LINUX:
+          unicode_mode_color = (RGB)C_ORANGE;
+          break;
+        default:
+          unicode_mode_color = (RGB)C_PURPLE;
+          break;
+      }
+      rgb_matrix_set_color(xy_to_led(1, 2), unicode_mode_color.r,
+                           unicode_mode_color.g, unicode_mode_color.b);
     } else if (layer_int == L_NUMPAD) {
       led_t led_state = host_keyboard_led_state();
-      LED_TOGGLE(23, C_CYAN, C_CYAN_DARK, led_state.num_lock);
-      LED_TOGGLE(26, C_CYAN, C_CYAN_DARK, led_state.num_lock);
-      LED_TOGGLE(27, C_BLUE, C_BLUE_DARK, led_state.caps_lock);
-      LED_TOGGLE(28, C_PURPLE, C_PURPLE_DARK, led_state.scroll_lock);
+      LED_TOGGLE(xy_to_led(11, 1), C_CYAN, C_CYAN_DARK,
+                 led_state.num_lock);  // KC_NUM
+      LED_TOGGLE(xy_to_led(2, 2), C_CYAN, C_CYAN_DARK,
+                 led_state.num_lock);  // KC_NUM
+      LED_TOGGLE(xy_to_led(3, 2), C_BLUE, C_BLUE_DARK,
+                 led_state.caps_lock);  // KC_CAPS
+      LED_TOGGLE(xy_to_led(4, 2), C_PURPLE, C_PURPLE_DARK,
+                 led_state.scroll_lock);  // KC_SCRL
     } else if (layer_int == L_LNUMPAD) {
       led_t led_state = host_keyboard_led_state();
-      LED_TOGGLE(18, C_CYAN, C_CYAN_DARK, led_state.num_lock);
+      LED_TOGGLE(xy_to_led(6, 1), C_CYAN, C_CYAN_DARK,
+                 led_state.num_lock);  // KC_NUM
     }
   }
   return true;
 }
-#pragma endregion
 
-#pragma region KEYCODES
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-  if (!process_record_snake(keycode, record)) {
-    return false;
-  }
-  if (!process_record_tictac(keycode, record)) {
-    return false;
-  }
-  if (!process_record_battleship(keycode, record)) {
-    return false;
-  }
+bool process_record_local(uint16_t keycode, keyrecord_t* record) {
+  ldprintf("process_record_local:  keycode: %d  (x,y): (%d, %d) \n", keycode,
+           record->event.key.col, record->event.key.row);
   if (record->event.pressed) {
     if (get_highest_layer(layer_state) == L_SNAKE && keycode == TO(L_BASE)) {
       snake_stop();

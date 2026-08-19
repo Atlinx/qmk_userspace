@@ -1,6 +1,7 @@
 #include "atlinx_planck_base.h"
 
 #include "info_config.h"
+#include "keycodes.h"
 
 #pragma region MAPS
 // clang-format off
@@ -33,7 +34,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [L_ADJUST] = LAYOUT_planck_mit(
     X______       , X______    , X______, X______      , X______    , X______  , X______     , X______     , X______    , X______     , X______     , X______,
     TO(L_BASE)    , AU_TOGG    , MU_TOGG, MU_NEXT      , X______    , KC_BRID  , KC_BRIU     , X______     , X______    , RM_VALU     , RM_VALD     , QK_BOOT,
-    X______       , X______    , X______, X______      , X______    , LED_LEVEL, AK_CYCLE_BOV, X______     , X______    , AK_BASE_TOGG, RM_NEXT     , EE_CLR ,
+    X______       , UC_WIN     , UC_MAC , UC_LINX      , X______    , LED_LEVEL, AK_CYCLE_BOV, X______     , X______    , AK_BASE_TOGG, RM_NEXT     , EE_CLR ,
     KC_MPRV       , KC_MNXT    , KC_MSTP, KC_MPLY      , _______    , _______                , _______     , KC_MUTE    , KC_VOLD     , KC_VOLU     , KC_MPLY
   ),
 

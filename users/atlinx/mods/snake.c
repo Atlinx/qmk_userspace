@@ -118,14 +118,14 @@ static void snake_draw(void) {
 
   // Body, drawn tail-first so the head stays on top.
   for (uint8_t i = snake_length; i > 0; i--) {
-    rgb_matrix_set_color(mat_xy(snake_body[i - 1].x, snake_body[i - 1].y),
+    rgb_matrix_set_color(xy_to_led(snake_body[i - 1].x, snake_body[i - 1].y),
                          c_snake_body.r, c_snake_body.g, c_snake_body.b);
   }
 
-  rgb_matrix_set_color(mat_xy(snake_body[0].x, snake_body[0].y), c_snake_head.r,
-                       c_snake_head.g, c_snake_head.b);
-  rgb_matrix_set_color(mat_xy(food.x, food.y), c_snake_food.r, c_snake_food.g,
-                       c_snake_food.b);
+  rgb_matrix_set_color(xy_to_led(snake_body[0].x, snake_body[0].y),
+                       c_snake_head.r, c_snake_head.g, c_snake_head.b);
+  rgb_matrix_set_color(xy_to_led(food.x, food.y), c_snake_food.r,
+                       c_snake_food.g, c_snake_food.b);
 }
 
 // --- Hooks ---

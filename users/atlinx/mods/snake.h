@@ -14,7 +14,7 @@
 //   rgb_matrix_indicators_snake()-> from rgb_matrix_indicators_user()
 //
 // Rendering assumes a row-major ortholinear LED layout, i.e. LED index
-// == (row * PHYSICAL_COLS) + col. Override SNAKE_XY_TO_LED if a board
+// == (y * PHYSICAL_COLS) + x. Override SNAKE_XY_TO_LED if a board
 // uses a different LED ordering.
 // ------------------------------------------------------------------
 

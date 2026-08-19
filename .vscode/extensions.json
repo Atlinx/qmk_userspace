@@ -3,6 +3,7 @@
     "llvm-vs-code-extensions.vscode-clangd",
     "JeronimoEkerdt.color-picker-universal",
     "maptz.regionfolder",
-    "tooark.ark-format-makefile"
+    "tooark.ark-format-makefile",
+    "editorconfig.editorconfig"
   ],
 }

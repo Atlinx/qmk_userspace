@@ -11,4 +11,4 @@ typedef enum {
   L_LOWSHFT,
 
   L_COUNT,
-} AtlinxLayer;
+} atlinx_layer_t;

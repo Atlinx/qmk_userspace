@@ -16,6 +16,7 @@
   "C_Cpp.default.compileCommands": [
     "${workspaceFolder}/compile_commands.json"
   ],
+  "clangd.path": "clangd-22",
   "color-picker-universal.customRegexes": {
     "rgb": [
       {

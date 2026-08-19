@@ -4,3 +4,5 @@ CompileFlags:
   Compiler: clang
 InlayHints:
   Designators: No
+Documentation:
+  CommentFormat: Doxygen

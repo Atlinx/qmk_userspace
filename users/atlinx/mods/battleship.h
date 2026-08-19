@@ -13,7 +13,7 @@
 //   rgb_matrix_indicators_battleship()-> from rgb_matrix_indicators_user()
 //
 // Rendering assumes a row-major ortholinear LED layout, i.e. LED index
-// == (row * PHYSICAL_COLS) + col (the shared `mat_xy` helper).
+// == (y * PHYSICAL_COLS) + x (the shared `mat_xy` helper).
 //
 // The screen is split: P1's board on the left half, P2's board on the
 // right half. The game uses NO custom keycodes - it is driven by
@@ -36,8 +36,8 @@
 // ------------------------------------------------------------------
 
 // --- Board geometry ---
-// Both boards share the same size. Cell (r, c) of player p is rendered
-// at (BSHIP_Px_X + c, BSHIP_Px_Y + r).
+// Both boards share the same size. Cell (x, y) of player p is rendered
+// at (BSHIP_Px_X + x, BSHIP_Px_Y + y).
 #ifndef BSHIP_COLS
 #define BSHIP_COLS 5  // columns per board
 #endif
